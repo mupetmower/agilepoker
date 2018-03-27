@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head lang="en">
+
+    <title>Current Session</title>
+
+	<!--/*/ <th:block th:include="fragments/headincludes :: head"></th:block> /*/-->
+	
+	
+	
+</head>
+<body>
+<div class="container">
+    <!--/*/ <th:block th:include="fragments/header :: header"></th:block> /*/-->
+         
+         
+    <h2>Session Details</h2>
+     
+        <div>
+            <form id="descriptionForm" class="form-horizontal">
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">Session Id:</label>
+                    <div class="col-sm-2">
+                        <div class="form-control-static" th:text="${gamesession.id}">Session Id</div>
+                    </div>
+					<label class="col-sm-2 control-label">Time Passed:</label>
+                    <div class="col-sm-2">
+                    
+                    	<p id="timeDisplay" class="form-control-static"></p>            	
+                    	<input id="timeData" class="timer" type="hidden" data-start="0"></input>
+                        <input id="startTime" type="hidden" value="${gamesession.timePassed}"></input>
+                        
+                        
+                        <div th:if="${passedUser.role.name() == 'Creator'}">
+                        	<input type="hidden" id="userIsCreator" value="true"></input>
+                        </div>
+                        <div th:unless="${passedUser.role.name() == 'Creator'}">
+                        	<input type="hidden" id="userIsCreator" value="false"></input>
+                        </div>
+                    </div>                   
+    			</div>
+    			
+    			<div class="form-group">
+                    <label class="col-sm-2 control-label">Task:</label>
+                    <div class="col-sm-10">
+                    	<div th:if="${passedUser.role.name() == 'Creator'}" >
+                        	<input id="task" class="col-sm-9" type="text" th:attr="value = ${gamesession.taskDescription}"/>
+                    	</div>
+                    	<div th:unless="${passedUser.role.name() == 'Creator'}" >
+                        	<input id="task" class="col-sm-9" type="text" readonly="true" th:attr="value = ${gamesession.taskDescription}"/>
+                    	</div>                    
+                    </div>
+                    
+                    
+                    <div th:if="${passedUser.role.name() == 'Creator'}"  class="col-sm-3">
+                        <p><input class="col-sm-9" type="hidden" id="btnDesc" value="Update Task"/></p>
+                    </div>
+                </div>
+			</form>
+				
+			<form th:if="${passedUser.role.name() == 'Creator'}" id="voteOperationForm" class="form-horizontal">
+                <div class="form-group">
+       				<label class="col-sm-2 control-label"></label>                  
+               		<div class="col-sm-9">
+                   		<input class="col-sm-3" type="submit" id="btnShowVotes" value="Show Votes"/>
+                   		<input class="col-sm-3" type="submit" id="btnHideVotes" value="Hide Votes"/>
+						<input class="col-sm-3" type="submit" id="btnClearVotes" value="Clear Votes"/>
+					</div>
+                </div>
+                
+            </form>              
+              
+                
+            <form id="pointsForm" class="form-horizontal" th:object="${passedUser}">
+            	<input type="hidden" id="currentUser" th:value="${passedUser}"/>
+            	<input type="hidden" id="currentUsername" th:value="${passedUser.username}"/>
+            	<input type="hidden" id="currentUserId" th:value="${passedUser.id}"/>
+            	<input type="hidden" id="gameSessionId" th:value="${gamesession.id}"/>
+            	<input type="hidden" id="gameSessionShowVotes" th:value="${gamesession.showVotes}"/>
+            
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">Points:</label>
+                    <div class="col-sm-10">
+                        <p class="form-control-static">
+                        	<button class="pointbutton" value="1">1 Point</button>
+                        	<button class="pointbutton" value="2">2 Points</button>
+                        	<button class="pointbutton" value="3">3 Points</button>
+                        </p>
+                        <p class="form-control-static">
+                        	<button class="pointbutton" value="5">5 Points</button>
+                        	<button class="pointbutton" value="10">10 Points</button>
+                        	<button class="pointbutton" value="20">20 Points</button>
+                        </p>
+                    </div>
+                </div>
+    		</form>
+    		
+    		<br/>
+    		<br/>
+    		
+    		<!-- Have tabs if user is game's creator - votes and voting stats -->
+    		<div th:if="${passedUser.role.name() == 'Creator'}">
+	    		<div data-tabs-role="tabs" class="tabs tabs_style_default tabs_color_gray">
+	    			
+			   		<div class="tabs__head">
+						<button class="tabs__tab" type="button" data-tabs-target="votes-tab" data-tabs-role="tab">User Votes</button>
+						<button class="tabs__tab" type="button" data-tabs-target="user-stats-tab" data-tabs-role="tab">User Statistics</button>
+					</div>
+					
+					
+					<!-- A tab body -->
+					<div class="tabs__body">
+						<div class="tabs__pane" data-tabs-id="votes-tab">
+							<table class="pointresponse" style="width:400px">
+            					
+            				</table>
+						</div>					
+					</div>
+					
+					<div class="tabs__body">
+						<div class="tabs__pane" data-tabs-id="user-stats-tab">
+							<h4>Statistics</h4>
+							
+							<table id="user-stats-table">
+								<thead><tr>
+									<th>User</th>
+									<th>Current Vote</th>
+									<th>Average Points</th>
+									<th>Average Time</th>
+									<th></th>
+								</tr></thead>
+								<tbody id="user-stats-table-body">
+									<!-- <tr class="user-stats-row creator-row tr-body">
+										<td class="creator-username" th:inline="text">[[__${passedUser.username}__]]</td>
+										<td class="current-vote"></td>
+										<td class="current-vote"></td>
+										<td class="avg-points"></td>
+										<td class="avg-time"></td>
+									</tr> -->
+								
+								</tbody>
+							
+							<br/>
+							
+							</table>
+							
+							<h4>Voting History</h4>
+							<table id="user-pastvotes-table">
+								
+									
+							</table>
+							
+							
+														
+						</div>					
+					</div>
+			
+	   			</div>    		
+    		</div>
+    		
+    		<div th:unless="${passedUser.role.name() == 'Creator'}">
+            	<table class="pointresponse" style="width:400px">
+            		
+            	</table>
+            </div>
+    		
+            
+            
+            
+            
+            <!--  Testing Stuff    		
+    		<br/>
+            <br/>
+            <div>
+            	<div><h2 th:inline="text">[[__${passedUser.username}__]]</h2></div>            	
+           		<div th:each="user : ${gamesession.users}">
+               		<p th:text="${user.id}">ID:</p>
+               		<p th:text="${user.username}">Name:</p>
+               	</div>            	
+            </div>
+            -->
+            
+            
+            
+            <br/>
+            <br/>
+            <br/>
+            <div>
+            	<p>Game Session URL: <text th:text="${#httpServletRequest.requestURL}" />
+            	<br/>This URL can be used to invite others to join this session.</p>
+            </div>
+    	</div>
+    
+    
+    
+    
+</div>
+
+<script>
+//Timer stuff
+	//document.getElementById('#timeData').style.display = "none";
+
+	var startTime = $("startTime").val();
+
+	$('.timer').countid({
+		clock: true,
+		dateTplElapsed: "%H:%M:%S"
+	});
+	
+	/*
+	$("#timeData").bind("DOMSubtreeModified",function(){
+		//$('#timeDisplay').html($("#timeData").text());
+		sendUpdateTime();
+	});
+	*/
+	
+	/*<![CDATA[*/
+		
+		if ($("#userIsCreator").val() == "true") {
+			window.setInterval(sendUpdateTime, 1000);
+		}
+    /*]]>*/
+	//window.setInterval(sendUpdateTime, 1000);
+
+
+    
+//Tabs Initialization
+$(document).ready(function() {
+	$('[data-tabs-role="tabs"]').tabs();
+
+	$(window).on('change.tabs', function(event) {
+		event.preventDefault();
+		console.log('change');
+	});
+});
+
+
+var supportsLocalStorage = false;
+function supportsHtml5Storage() {
+    return typeof(Storage) !== "undefined";
+}
+
+function getUsernameFromLocalStorage() {
+	var storedUsername = localStorage.getItem("stored_default_username");
+}
+
+function storeUsernameInLocalStorage() {
+	var username = $("#currentUsername").val();
+	localStorage.setItem("stored_default_username", username);
+}
+
+function displayLocalStorageContents() {
+	/*<![CDATA[*/    	
+	
+    var contents = "";
+    var key = "";
+    var value = "";
+    for (var i = 0; i < localStorage.length; i++) {
+        key = localStorage.key(i);
+        value= localStorage.getItem(key);
+        contents += "index=" + i + "  key=" + key + "  value=" + value;
+    }
+    return contents;
+    
+    /*]]>*/
+}
+	
+    
+var gameSessionId = $('#gameSessionId').val();
+var currentUserId = $('#currentUserId').val();
+var inSession = "true";
+
+var stompClient = null;
+var value = null;
+
+if (window.addEventListener) { // Mozilla, Netscape, Firefox
+    window.addEventListener('load', WindowLoad, false);
+} else if (window.attachEvent) { // IE
+    window.attachEvent('onload', WindowLoad);
+}
+
+window.onbeforeunload = confirmExit;
+function confirmExit(){
+    //alert("confirm exit is being called");
+    return true;
+}
+
+window.onunload = endSession;
+function endSession() {
+	inSession = false;
+	sessionStorage.setItem("currently_in_session", "false");
+	sendCheckInSession();
+	
+	return true;
+}
+
+function WindowLoad(event) {
+    //alert("Another onload script");
+    console.log('Calling init..');
+    initSockJS();
+    
+    
+    
+    if (supportsHtml5Storage()) {
+    	supportsLocalStorage = true;
+    	console.log("This browser DOES support local storage....");
+    	
+    	//localStorage.setItem("testitem", "testitemvalue");
+       	//var test = localStorage.getItem("testitem");
+       	//console.log("LocalStorage Test Item: " + test);       	
+       	//console.log(displayLocalStorageContents());
+       	
+       	storeUsernameInLocalStorage();
+       	
+        addSessionChecking();
+        
+    } else {
+    	supportsLocalStorage = false;
+    	console.log("This browser does NOT support local storage....");
+    }
+    
+    
+   
+   
+}
+
+
+
+function addSessionChecking() {
+	sessionStorage.setItem("currently_in_session", "true");
+	inSession = "true";
+}
+
+
+
+
+
+function initPoints() {
+	value = -1;
+	console.log("Sending to initPoints..");
+	sendUpdatePoints(); 
+}
+
+
+
+$('.pointbutton').click(function(){
+    value = $(this).val();
+});
+
+
+$("#pointsForm").submit(function (event) {
+
+    //stop submit the form, we will post it manually.
+    event.preventDefault();
+    
+    sendUpdatePoints();
+    
+});
+
+$("#descriptionForm").submit(function (event) {
+
+    //stop submit the form, we will post it manually.
+    event.preventDefault();
+   
+    //fire_ajax_submit();
+    sendUpdateTask(); 
+});
+
+$("#voteOperationForm").submit(function (event) {
+    //stop submit the form, we will post it manually.
+    event.preventDefault();
+});
+
+$('#btnShowVotes').click(function(){
+    sendShowVotes();
+});
+
+$('#btnHideVotes').click(function(){
+    sendHideVotes();
+});
+
+$('#btnClearVotes').click(function(){
+    sendClearVotes();
+});
+
+$('.btnKickUser').click(function(){
+    sendKickUser($(this).val());
+});
+
+function kickUserButtonClicked(button) {
+	sendKickUser($(button).val());
+}
+
+function initSockJS() {
+	
+	 var socket = new SockJS("/sockjs-websocket");
+	    stompClient = Stomp.over(socket);
+	    stompClient.connect({}, function (frame) {
+	        //setConnected(true);
+	        console.log('Connected: ' + frame);
+	        stompClient.subscribe('/topic/updatepoints', function (response) {
+	            //showResponse(JSON.parse(response.body).content);
+	        	updatePoints((JSON.parse(response.body)));
+	        });
+	        
+	        stompClient.subscribe('/topic/updatetime/' + gameSessionId, function (response) {
+	            //showResponse(JSON.parse(response.body).content);
+	        	updateTime((JSON.parse(response.body)));
+	        });
+	        
+	        stompClient.subscribe('/topic/updatetask', function (response) {
+	            //showResponse(JSON.parse(response.body).content);
+	        	updateTask((JSON.parse(response.body)));
+	        });
+	        
+	        stompClient.subscribe('/topic/showvotes', function (response) {
+	            //showResponse(JSON.parse(response.body).content);
+	        	showVotes((JSON.parse(response.body)));
+	        });
+	        
+	        stompClient.subscribe('/topic/clearvotes', function (response) {
+	            //showResponse(JSON.parse(response.body).content);
+	        	updatePoints((JSON.parse(response.body)));
+	        });
+	        
+	        stompClient.subscribe('/topic/updateuserlist/' + gameSessionId, function (response) {
+	            //showResponse(JSON.parse(response.body).content);
+	        	updateUserList((JSON.parse(response.body)));
+	        });
+	        
+	        stompClient.subscribe('/topic/userkicked/' + gameSessionId, function (response) {
+	            //showResponse(JSON.parse(response.body).content);
+	        	sendUpdateUser();
+	        	sendUpdateVotes();
+	        });
+	        
+	        stompClient.subscribe('/topic/checkinsession/' + gameSessionId, function (response) {
+	            //showResponse(JSON.parse(response.body).content);
+	        	updateIsInSession((JSON.parse(response.body)));
+	        });
+	        
+	        stompClient.subscribe('/topic/checkinsession/allusers/' + gameSessionId, function (response) {
+	            //showResponse(JSON.parse(response.body).content);
+	        	kickFromKickList((JSON.parse(response.body)));
+	        });
+	        
+	        
+	        
+//Other initializations that need messaging and subscriptions to finish first must go here
+	        initPoints();
+	        
+	        addToUserList();
+	        
+	    });
+	
+	    
+}
+
+
+function addToUserList() {	
+	console.log("Updating user list for creator..");
+	
+	sendUpdateUser();
+}
+
+
+function fire_ajax_submit() {
+	
+	var request = {}
+	//request["user"] = ${"passedUser"};
+	request["points"] = $("#btnPoints").val();
+	request["userId"] = $("#currentUserId").val();
+	request["gameSessionId"] = $("#gameSessionId").val();
+	
+	 $.ajax({
+	        type: "POST",
+	        contentType: "application/json",
+	        url: "/user/updatepoints",
+	        data: JSON.stringify(request),
+	        dataType: 'json',
+	        cache: false,
+	        timeout: 600000,
+	        success: function (data) {
+
+	            var json = "<h4>Ajax Response</h4><pre>"
+	                + JSON.stringify(data, null, 4) + "</pre>";
+	            $('#pointresponse').html(json);
+
+	            console.log("SUCCESS : ", data);
+	            //$("#btn-search").prop("disabled", false);
+
+	        },
+	        error: function (e) {
+
+	            var json = "<h4>Ajax Response</h4><pre>" + e.responseText + "</pre>";
+	            $('#pointresponse').html(json);
+
+	            console.log("ERROR : ", e);
+	            //$("#btn-search").prop("disabled", false);
+
+	        }
+	    });
+
+	
+}
+
+
+
+function sendUpdatePoints() {
+	/*<![CDATA[*/
+	console.log("SENDING UpdatePoints..");
+	
+	var request = {}
+	//request["user"] = ${"passedUser"};
+	request["points"] = value;
+	request["userId"] = $("#currentUserId").val();
+	request["gameSessionId"] = $("#gameSessionId").val();
+	request["showVotes"] = $("#gameSessionShowVotes").val();
+		        
+	stompClient.send("/msg/updateallpoints", {}, JSON.stringify(request));
+	/*]]>*/
+}
+
+function updatePoints(response) {
+	/*<![CDATA[*/    	
+		
+	var output = "<thead><tr><th>User</th><th>Points</th></tr></thead>";	
+	
+	for (var i = 0; i < response.usernames.length; i++) {
+		if (response.showVotes) {
+			output += "<tr class=\"tr-body\"><td>" + response.usernames[i] + "</td><td>" + response.points[i] + "</td></tr>"
+		} else {
+			output += "<tr class=\"tr-body\"><td>" + response.usernames[i] + "</td><td><div background-color=\"#ffffff\" color=\"#ffffff\">       </div></td></tr>";
+		}			
+	}	
+	
+	
+	//So this hidden input val will update with the correct value.. (for some reason it would not update
+	//for all sessions)
+	$('#gameSessionShowVotes').val(response.showVotes);
+    $('.pointresponse').html(output);
+    
+    
+    sendUpdateUser();
+
+    /*]]>*/
+}
+
+
+
+
+function sendUpdateTask() {
+	console.log("SENDING updateTask..");
+	
+	var request = {}
+	request["gameSessionId"] = $("#gameSessionId").val();
+	request["taskDescription"] = $("#task").val();
+	        
+	stompClient.send("/msg/updatetask", {}, JSON.stringify(request));	
+}
+
+
+var tasksInOrder = [];
+
+function updateTask(response) {
+	$('#task').val(response.taskDescription);
+	resetTime();
+	sendUpdateUser();
+	
+	var inArray = false;
+	
+	for (t of tasksInOrder) {
+		if (t === response.taskDescription) {
+			inArray = true;
+			break;
+		}
+	}
+	
+	if (!inArray) {
+		tasksInOrder.push(response.taskDescription);
+	}
+	
+}
+
+function resetTime() {
+	$('.timer').countid('setCurrent');
+}
+
+function sendShowVotes() {
+	console.log("SENDING showVotes..");	
+	
+	var request = {}
+	request["gameSessionId"] = $("#gameSessionId").val();
+	request["showVotes"] = "true";
+	
+	stompClient.send("/msg/showvotes", {}, JSON.stringify(request));
+}
+
+function sendHideVotes() {
+	console.log("SENDING hideVotes..");	
+	
+	var request = {}
+	request["gameSessionId"] = $("#gameSessionId").val();
+	request["showVotes"] = "false";
+	
+	stompClient.send("/msg/hidevotes", {}, JSON.stringify(request));
+}
+
+function sendClearVotes() {
+	console.log("SENDING clearVotes..");	
+	
+	var request = {}
+	request["gameSessionId"] = $("#gameSessionId").val();
+	request["showVotes"] = "false";
+	
+	stompClient.send("/msg/clearvotes", {}, JSON.stringify(request));
+}
+
+function sendUpdateVotes() {
+	console.log("SENDING updateVotes..");	
+	
+	var request = {}
+	request["gameSessionId"] = $("#gameSessionId").val();
+	request["showVotes"] = $("#gameSessionShowVotes").val();
+	
+	stompClient.send("/msg/updatevotes", {}, JSON.stringify(request));
+}
+
+
+function showVotes(response) {
+	/*<![CDATA[*/
+    
+	var output = "<thead><tr><th>User</th><th>Points</th></tr></thead>";	
+	
+    for (var i = 0; i < response.usernames.length; i++) {
+		output += "<tr class=\"tr-body\"><td>" + response.usernames[i] + "</td><td>" + response.points[i] + "</td></tr>"
+	}
+	
+    $('.pointresponse').html(output);
+
+    /*]]>*/
+}
+
+function sendUpdateTime() {
+	console.log("SENDING updateTime..");
+	
+	
+	var request = {}
+	request["gameSessionId"] = $("#gameSessionId").val();
+	request["timePassed"] = $("#timeData").text();
+	
+	stompClient.send("/msg/updatetime/" + gameSessionId, {}, JSON.stringify(request));
+}
+
+function updateTime(response) {
+	/*<![CDATA[*/
+    
+	var output = "";
+	output = response.timePassed;    
+	
+    $('#timeDisplay').html(output);
+    
+    if (inSession == true || inSession == "true") {
+    	sendCheckInSession();
+	}
+	
+    /*]]>*/
+}
+
+
+function sendUpdateUser() {
+	console.log("SENDING updateUser..");
+	//var userId = $("#currentUserId").val();
+	//var names = ["gameSessionId", "userId", "currentUser"];
+	//var values = [$("#gameSessionId").val(), $("#currentUserId").val(), $("#currentUser").val()];
+	
+	var request = {};
+	//request["names"] = names;
+	//request["values"] = values;
+	
+	//request["userId"] = $("#currentUserId").val();
+	
+	stompClient.send("/msg/updateuserlist/" + gameSessionId, {}, JSON.stringify(request));
+}
+
+function updateUserList(response) {
+	/*<![CDATA[*/
+		
+	var output = "";
+	
+	for (var i = 0; i < response.userStatisticsMessages.length; i++) {
+
+		output += "<tr><td>" + response.userStatisticsMessages[i].username + "</td><td>" + response.userStatisticsMessages[i].currentVote + "</td><td>" + response.userStatisticsMessages[i].averagePoints + "</td><td>" + response.userStatisticsMessages[i].averageTime + "</td>";
+		output += "<td><button class=\"btnKickUser\" value=\"" + response.userStatisticsMessages[i].userId +"\" onclick=\"kickUserButtonClicked(this);\">Kick User</button></td></tr>"
+	}
+	
+	$('#user-stats-table-body').html(output);
+	
+	
+	updatePastVotesTable(response);
+	/*]]>*/
+}
+
+function sendCheckInSession() {
+	console.log("SENDING checkInSession..");
+	
+	var inSes = sessionStorage.getItem("currently_in_session");
+	
+	var request = {};
+	request["userId"] = currentUserId;
+	request["isInSession"] = inSes;
+	
+	stompClient.send("/msg/checkinsession/" + gameSessionId, {}, JSON.stringify(request));	
+}
+
+function checkIfUserStillInSession(id) {
+	inSession = sessionStorage.getItem("currently_in_session");
+	if (inSession != "true") {
+		
+		sendKickUser(id);
+	} 
+}
+
+function updateIsInSession(response) {
+	inSession = response.isInSession;
+	
+	sessionStorage.setItem("currently_in_session", inSession);
+
+	//checkIfUserStillInSession(response.userId);
+	sendCheckAllUsersInSession();
+	
+}
+
+function sendCheckAllUsersInSession() {
+	var request = {};
+	stompClient.send("/msg/checkinsession/allusers/" + gameSessionId, {}, JSON.stringify(request));	
+}
+
+function kickFromKickList(response) {
+	/*<![CDATA[*/
+	
+	for (var i = 0; i < response.kickList.length; i++) {
+		sendKickUser(response.kickList[i]);
+	}
+	
+	/*]]>*/
+}
+
+
+function sendKickUser(id) {
+	console.log("SENDING kickUser..");
+		
+	var request = {};
+	request["userId"] = id;
+	//request["values"] = values;
+	
+	//request["userId"] = $("#currentUserId").val();
+	
+	stompClient.send("/msg/kickuser/" + gameSessionId, {}, JSON.stringify(request));
+}
+
+
+function sendUpdatePastVotesTable() {
+	console.log("SENDING updatePastVotesTable..");
+	
+	var request = {};
+	
+	stompClient.send("/msg/updatepastvotestable/" + gameSessionId, {}, JSON.stringify(request));	
+}
+
+
+
+
+function updatePastVotesTable(response) {
+	/*<![CDATA[*/
+	
+	var table = "<thead><th>User</th>";
+//Table Header Creation
+
+
+	console.log("tasksInOrder length: " + tasksInOrder.length);
+
+	for (var i = 0; i < tasksInOrder.length; i++) {
+		table += "<th>Task " + i + "</th>";
+	}
+	
+	table += "</thead><tbody>";
+	
+	/* for (var i = 0; i < response.userStatisticsMessages.length; i++) {
+		table += "<tr><td>" + response.userStatisticsMessages.username + "</td>";
+		for (var [task, points] of response.userStatisticsMessages[i].pointsPerTask) {
+			table += "<td>" + points + "</td>";
+		}
+		table += "</tr>";
+	} */
+	
+	
+	
+//Table Body Creation
+ 	for (var i = 0; i < response.userStatisticsMessages.length; i++) {
+		table += "<tr><td>" + response.userStatisticsMessages[i].username + "</td>";
+		
+		for (var j = 0; j < tasksInOrder.length; j++) {
+			console.log("Task: " + j + "  - Desc: " + tasksInOrder[j] + "  - Points: " + response.userStatisticsMessages[i].pointsPerTask[tasksInOrder[j]]);
+			table += "<td>" + response.userStatisticsMessages[i].pointsPerTask[tasksInOrder[j]] + "</td>";
+		}
+		
+		table += "</tr>";
+	} 
+	
+	table += "</tbody>";
+	
+	$('#user-pastvotes-table').html(table);
+	/*]]>*/
+}
+
+
+</script>
+
+
+
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Insert title here</title>
+</head>
+<body>
+
+<div class="options-section container">
+	
+	<!-- Div to hold tabs and give default styling -->
+	<div data-tabs-role="tabs" class="tabs tabs_style_default tabs_color_gray">
+	
+		<!-- These are the heads for the tabs. These point to the tab bodies below -->
+   		<div class="tabs__head">
+			<button class="tabs__tab" type="button" data-tabs-target="options-tab" data-tabs-role="tab">Options</button>
+			<button class="tabs__tab" type="button" data-tabs-target="point-values-tab" data-tabs-role="tab">Point Values</button>
+		</div>
+		
+		
+		<!-- A tab body -->
+		<div class="tabs__body">
+			<div class="tabs__pane" data-tabs-id="options-tab">
+				<h4>Options</h4>
+				<p>Gonna put some options here..</p>
+			</div>					
+		</div>
+		
+		<div class="tabs__body">
+			<div class="tabs__pane" data-tabs-id="options-tab">
+				<h4>Option 2</h4>
+				<p>Gonna put some other options here..</p>
+			</div>					
+		</div>
+		
+   	</div>
+</div>
+
+
+<script>
+
+$(document).ready(function() {
+	$('[data-tabs-role="tabs"]').tabs();
+
+	$(window).on('change.tabs', function(event) {
+		event.preventDefault();
+		console.log('change');
+	});
+});
+
+</script>
+
+
+</body>
+</html>

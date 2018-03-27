@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head lang="en">
+ 
+    <title>Create Session</title>
+ 
+    <!--/*/ <th:block th:include="fragments/headincludes :: head"></th:block> /*/-->
+</head>
+<body>
+<div class="container">
+    <!--/*/ <th:block th:include="fragments/header :: header"></th:block> /*/-->
+ 
+    <h2>Join a Session</h2>
+    <div>
+        <form class="form-horizontal" th:action="@{/joingamesession}" method="post">
+           	<input type="hidden" name="fromInternal" value="true" />
+            <div class="form-group">
+                <label class="col-sm-3 control-label">Session Id:</label>
+                <div class="col-sm-9">
+                    <input type="text" class="form-control" name="id" th:value="${gameIdToJoin}" required="true" />
+                </div>
+            </div>
+            
+             <div class="form-group">
+                <label class="col-sm-3 control-label">Your Display Name:</label>
+                <div class="col-sm-9">
+                    <input type="text" class="form-control" id="txtUsername" name="txtUsername" required="true" />
+                </div>
+            </div>
+            
+            <div class="row">
+                <button type="submit" class="btn btn-default">Submit</button>
+            </div>          
+        </form>
+    </div>
+</div>
+
+<script>
+
+if (window.addEventListener) { // Mozilla, Netscape, Firefox
+    window.addEventListener('load', WindowLoad, false);
+} else if (window.attachEvent) { // IE
+    window.attachEvent('onload', WindowLoad);
+}
+
+var supportsLocalStorage = false;
+function supportsHtml5Storage() {
+    return typeof(Storage) !== "undefined";
+}
+
+function getUsernameFromLocalStorage() {
+	var storedUsername = localStorage.getItem("stored_default_username");
+	return storedUsername;
+}
+
+function WindowLoad(event) {
+	if (supportsHtml5Storage()) {
+    	supportsLocalStorage = true;
+    	console.log("This browser DOES support local storage....");
+    	
+    	enterNameInUsernameField(getUsernameFromLocalStorage());
+       	
+    } else {
+    	supportsLocalStorage = false;
+    	console.log("This browser does NOT support local storage....");
+    }
+	
+}
+
+
+function enterNameInUsernameField(username) {
+	$("#txtUsername").val(username);
+}
+
+
+</script>
+
+</body>
+</html>
