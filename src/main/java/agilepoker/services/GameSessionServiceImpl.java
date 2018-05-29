@@ -1,5 +1,7 @@
 package agilepoker.services;
 
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import agilepoker.domain.GameSession;
@@ -25,6 +27,7 @@ public class GameSessionServiceImpl implements GameSessionService {
 	    return sessionRepository.findOne(id);
 	}
 	
+	@Transactional
 	@Override
 	public GameSession saveSession(GameSession gameSession) {
 	    return sessionRepository.save(gameSession);

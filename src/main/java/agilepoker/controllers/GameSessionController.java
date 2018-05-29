@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import javax.transaction.Transactional;
 import javax.validation.Valid;
 
 import org.apache.log4j.Logger;
@@ -196,23 +197,25 @@ public class GameSessionController {
     }
 	
 	
-	
+	@Transactional
 	@MessageMapping("/updatetask")
 	@SendTo("/topic/updatetask")
 	public @ResponseBody TaskMessage replyToPointsMessage(@Valid @RequestBody TaskMessage request) throws Exception {
+		
 		String task = request.getTaskDescription();
 		
 		GameSession gameSession;		
 		
 		TaskMessage response = new TaskMessage();
 		response.setTaskDescription(task);
-
+		
 		
 		gameSession = gameSessionService.getSessionById(request.getGameSessionId());
 		gameSession.setTaskDescription(task);
 		
 		Set<User> users = gameSession.getUsers();
 		gameSessionService.saveSession(gameSession);	
+		
 		
 		users.forEach(user -> {
 			UserStatistics userStats = userStatisticsService.getUserStatisticsById(user.getUserStatistics().getId());

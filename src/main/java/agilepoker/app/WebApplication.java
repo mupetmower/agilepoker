@@ -1,4 +1,4 @@
-package agilepoker.demo;
+package agilepoker.app;
 
 import org.hibernate.Hibernate;
 import org.springframework.boot.SpringApplication;
@@ -9,11 +9,11 @@ import agilepoker.domain.UserStatistics;
 
 @SpringBootApplication
 @ComponentScan(basePackages = { "agilepoker.*"})
-public class DemoApplication {
+public class WebApplication {
 
 	
 	public static void main(String[] args) {
-		SpringApplication.run(DemoApplication.class, args);
+		SpringApplication.run(WebApplication.class, args);
 
 		
 	}
