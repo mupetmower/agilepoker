@@ -21,18 +21,6 @@ public class GameSessionStatisticsController {
 	
 	
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	@Autowired
 	public void setgameSessionService(GameSessionService gameSessionService) {
 		this.gameSessionService = gameSessionService;
