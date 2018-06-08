@@ -69,7 +69,7 @@
                		<div class="col-sm-10">               		
 	               		<table>
 		               		<tr>
-		               			<td><button class="btn btn-primary" id="btnToggleVoteVisibility">Toggle Vote Visibility</button></td>
+		               			<td><button type="button" class="btn btn-primary" data-toggle="button" aria-pressed="false" autocomplete="off" id="btnToggleVoteVisibility">Toggle Vote Visibility</button></td>
 		                   	 	<td><button class="btn btn-primary" type="submit" id="btnClearVotes">Clear Votes</button></td>
 		                    	<td><button class="btn btn-primary" id="toggle-point-type" onclick="togglePointType();">Toggle Point Type</button></td>
 		                    </tr>
@@ -232,7 +232,7 @@ $(document).ready(function() {
 
 	$(window).on('change.tabs', function(event) {
 		event.preventDefault();
-		//console.log('change');
+		////console.log('change');
 	});
 });
 
@@ -272,6 +272,7 @@ var gameSessionId = $('#gameSessionId').val();
 var currentUserId = $('#currentUserId').val();
 var inSession = "true";
 var typeIsSize = $('#gameSessionPointTypeIsSize').val();
+var userIsCreator = $("#userIsCreator").val();
 
 
 var stompClient = null;
@@ -300,19 +301,19 @@ function endSession() {
 
 function WindowLoad(event) {
     //alert("Another onload script");
-    console.log('Calling init..');
+    //console.log('Calling init..');
     initSockJS();
     
     
     
     if (supportsHtml5Storage()) {
     	supportsLocalStorage = true;
-    	console.log("This browser DOES support local storage....");
+    	//console.log("This browser DOES support local storage....");
     	
     	//localStorage.setItem("testitem", "testitemvalue");
        	//var test = localStorage.getItem("testitem");
-       	//console.log("LocalStorage Test Item: " + test);       	
-       	//console.log(displayLocalStorageContents());
+       	////console.log("LocalStorage Test Item: " + test);       	
+       	////console.log(displayLocalStorageContents());
        	
        	storeUsernameInLocalStorage();
        	
@@ -320,7 +321,7 @@ function WindowLoad(event) {
         
     } else {
     	supportsLocalStorage = false;
-    	console.log("This browser does NOT support local storage....");
+    	//console.log("This browser does NOT support local storage....");
     }
        
    
@@ -339,7 +340,7 @@ function addSessionChecking() {
 
 function initPoints() {
 	value = -1;
-	console.log("Sending to initPoints..");
+	//console.log("Sending to initPoints..");
 	sendUpdatePoints(); 
 }
 
@@ -358,8 +359,13 @@ $("#pointsForm").submit(function (event) {
 
     //stop submit the form, we will post it manually.
     event.preventDefault();
+
+    if (userIsCreator == "true") {
+    	sendUpdatePointsFromCreator();
+    } else {
+    	sendUpdatePoints();
+    }
     
-    sendUpdatePoints();
     
 });
 
@@ -403,14 +409,23 @@ function kickUserButtonClicked(button) {
 
 function initSockJS() {
 	
-	 var socket = new SockJS("/sockjs-websocket");
-	    stompClient = Stomp.over(socket);
+	var socket = new SockJS("/sockjs-websocket");
+		stompClient = Stomp.over(socket);
+		stompClient.debug = function(str) {};
 	    stompClient.connect({}, function (frame) {
 	        //setConnected(true);
-	        console.log('Connected: ' + frame);
+	        //console.log('Connected: ' + frame);
 	        stompClient.subscribe('/topic/updatepoints/' + gameSessionId, function (response) {
 	            //showResponse(JSON.parse(response.body).content);
-	        	updatePoints((JSON.parse(response.body)));
+	            var b = (JSON.parse(response.body));
+	            if (b.fromCreator == true) {
+	            	updatePoints((JSON.parse(response.body)));	        		
+	        		//sendUpdateTaskNoClear();
+	        		sendShowVotes();
+	        	} else {
+	        		updatePoints((JSON.parse(response.body)));
+		        }
+	        		        	
 	        });
 	        
 	        stompClient.subscribe('/topic/updatetime/' + gameSessionId, function (response) {
@@ -421,7 +436,11 @@ function initSockJS() {
 	        stompClient.subscribe('/topic/updatetask/' + gameSessionId, function (response) {
 	            //showResponse(JSON.parse(response.body).content);
 	        	updateTask((JSON.parse(response.body)));	        	
-	        	
+	        });
+
+	        stompClient.subscribe('/topic/updatetasknoclear/' + gameSessionId, function (response) {
+	            //showResponse(JSON.parse(response.body).content);
+	        	updateTaskNoClear((JSON.parse(response.body)));	        	
 	        });
 	        
 	        stompClient.subscribe('/topic/showvotes/' + gameSessionId, function (response) {
@@ -443,6 +462,15 @@ function initSockJS() {
 	            //showResponse(JSON.parse(response.body).content);
 	        	sendUpdateUser();
 	        	sendUpdateVotes();
+
+				var b = JSON.parse(response.body);
+				
+	        	if (currentUserId == b.userId) {
+	        		window.onbeforeunload = function() {};
+	        		window.location.href = "kicked";
+	        		
+	        	}
+			    
 	        });
 	        
 	        stompClient.subscribe('/topic/checkinsession/' + gameSessionId, function (response) {
@@ -464,6 +492,8 @@ function initSockJS() {
 	        initPoints();	                
 	        addToUserList();
 	    	requestPointType()
+
+	    	
 	    });
 	
 	    
@@ -471,17 +501,16 @@ function initSockJS() {
 
 
 function addToUserList() {	
-	console.log("Updating user list for creator..");
+	//console.log("Updating user list for creator..");
 	
 	sendUpdateUser();
 }
 
 
 
-
 function sendUpdatePoints() {
 	/*<![CDATA[*/
-	console.log("SENDING UpdatePoints..");
+	//console.log("SENDING UpdatePoints..");
 	
 	var request = {}
 	//request["user"] = ${"passedUser"};
@@ -489,19 +518,40 @@ function sendUpdatePoints() {
 	request["userId"] = $("#currentUserId").val();
 	request["gameSessionId"] = $("#gameSessionId").val();
 	request["showVotes"] = $("#gameSessionShowVotes").val();
+
+	request["fromCreator"] = false;
+		        
+	stompClient.send("/msg/updateallpoints/" + gameSessionId, {}, JSON.stringify(request));
+	/*]]>*/
+}
+
+function sendUpdatePointsFromCreator() {
+	/*<![CDATA[*/
+	//console.log("SENDING UpdatePoints..");
+	
+	var request = {}
+	//request["user"] = ${"passedUser"};
+	request["points"] = value;
+	request["userId"] = $("#currentUserId").val();
+	request["gameSessionId"] = $("#gameSessionId").val();
+	request["showVotes"] = $("#gameSessionShowVotes").val();
+
+	request["fromCreator"] = true;
 		        
 	stompClient.send("/msg/updateallpoints/" + gameSessionId, {}, JSON.stringify(request));
 	/*]]>*/
 }
 
 function updatePoints(response) {
-	/*<![CDATA[*/    	
+	/*<![CDATA[*/   
+	
 		
 	var output = "<thead><tr><th>User</th><th>Has Voted</th><th>Points</th></tr></thead>";	
 
 	var currentTotal = 0.0;
 	var currentCount = 0;
 	var currentAvg = 0.0;
+	
 	
 	for (var i = 0; i < response.usernames.length; i++) {
 		
@@ -545,6 +595,8 @@ function updatePoints(response) {
     
     
     sendUpdateUser();
+
+	
 
     /*]]>*/
 }
@@ -611,10 +663,69 @@ function updatePointsFromClear(response) {
     /*]]>*/
 }
 
+function updatePointsFromCreator(response) {
+	/*<![CDATA[*/    
+	
+    value = -1;
+    $('#gameSessionShowVotes').val(false);
+	sendUpdatePoints();
+	sendUpdateUser();
+	sendHideVotes();
+		
+	var output = "<thead><tr><th>User</th><th>Has Voted</th><th>Points</th></tr></thead>";	
 
+	var currentTotal = 0.0;
+	var currentCount = 0;
+	var currentAvg = 0.0;
+	
+	for (var i = 0; i < response.usernames.length; i++) {
+		
+		if (response.showVotes) {
+			
+			output += "<tr class=\"tr-body\"><td>" + response.usernames[i] + "</td>";
+			
+			if (response.points[i] != -1) {
+				output += "<td>Yes</td><td>" + response.points[i] + "</td>";
+				if (!isNaN(response.points[i])) {
+					currentTotal += parseFloat(response.points[i]);
+					currentCount++;
+				} else {
+					//If time, put logic to get avg of s,m,l
+				}
+			} else {
+				output += "<td></td><td></td>";
+			}
+			output += "</tr>";
+			
+		} else {			
+			output += "<tr class=\"tr-body\"><td>" + response.usernames[i] + "</td>";
+			
+			if (response.points[i] != -1) {
+				output += "<td>Yes</td><td></td>";
+			} else {
+				output += "<td></td><td></td>";
+			}
+			output += "</tr>";		}			
+	}	
+
+	if (response.showVotes) {
+		currentAvg = currentTotal / currentCount;
+		var formattedCurrentAvg = Number(currentAvg.toFixed(2));
+		output += "<tr><th class=\"th-bottom\" colspan=\"2\">Current Average</th><th class=\"th-bottom\">" + formattedCurrentAvg + "</th></tr>";
+	}
+	//So this hidden input val will update with the correct value.. (for some reason it would not update
+	//for all sessions)
+	$('#gameSessionShowVotes').val(response.showVotes);
+    $('.pointresponse').html(output);
+    
+    
+    sendUpdateUser();
+
+    /*]]>*/
+}
 
 function sendUpdateTask() {
-	console.log("SENDING updateTask..");
+	//console.log("SENDING updateTask..");
 	
 	var request = {}
 	request["gameSessionId"] = $("#gameSessionId").val();
@@ -623,8 +734,19 @@ function sendUpdateTask() {
 	stompClient.send("/msg/updatetask/" + gameSessionId, {}, JSON.stringify(request));	
 }
 
+function sendUpdateTaskNoClear() {
+	//console.log("SENDING updateTask..");
+	
+	var request = {}
+	request["gameSessionId"] = $("#gameSessionId").val();
+	request["taskDescription"] = $("#task").val();
+	        
+	stompClient.send("/msg/updatetasknoclear/" + gameSessionId, {}, JSON.stringify(request));	
+}
+
 
 var tasksInOrder = [];
+//tasksInOrder[0] = $('#task').val();
 
 function updateTask(response) {
 	$('#task').val(response.taskDescription);
@@ -652,12 +774,33 @@ function updateTask(response) {
 	
 }
 
+function updateTaskNoClear(response) {
+	$('#task').val(response.taskDescription);
+	//resetTime();
+			
+	var inArray = false;
+	
+	for (t of tasksInOrder) {
+		if (t === response.taskDescription) {
+			inArray = true;
+			break;
+		}
+	}
+	
+	if (!inArray) {
+		tasksInOrder.push(response.taskDescription);
+	}
+
+	sendShowVotes();
+	
+}
+
 function resetTime() {
 	$('.timer').countid('setCurrent');
 }
 
 function sendShowVotes() {
-	console.log("SENDING showVotes..");	
+	//console.log("SENDING showVotes..");	
 	
 	var request = {}
 	request["gameSessionId"] = $("#gameSessionId").val();
@@ -667,7 +810,7 @@ function sendShowVotes() {
 }
 
 function sendHideVotes() {
-	console.log("SENDING hideVotes..");	
+	//console.log("SENDING hideVotes..");	
 	
 	var request = {}
 	request["gameSessionId"] = $("#gameSessionId").val();
@@ -677,7 +820,7 @@ function sendHideVotes() {
 }
 
 function sendClearVotes() {
-	console.log("SENDING clearVotes..");	
+	//console.log("SENDING clearVotes..");	
 	
 	var request = {}
 	request["gameSessionId"] = $("#gameSessionId").val();
@@ -687,7 +830,7 @@ function sendClearVotes() {
 }
 
 function sendUpdateVotes() {
-	console.log("SENDING updateVotes..");	
+	//console.log("SENDING updateVotes..");	
 	
 	var request = {}
 	request["gameSessionId"] = $("#gameSessionId").val();
@@ -712,7 +855,7 @@ function showVotes(response) {
 }
 
 function sendUpdateTime() {
-	console.log("SENDING updateTime..");
+	//console.log("SENDING updateTime..");
 	
 	
 	var request = {}
@@ -739,7 +882,7 @@ function updateTime(response) {
 
 
 function sendUpdateUser() {
-	console.log("SENDING updateUser..");
+	//console.log("SENDING updateUser..");
 	//var userId = $("#currentUserId").val();
 	//var names = ["gameSessionId", "userId", "currentUser"];
 	//var values = [$("#gameSessionId").val(), $("#currentUserId").val(), $("#currentUser").val()];
@@ -773,8 +916,12 @@ function updateUserList(response) {
 
 		
 		output += "<tr><td>" + response.userStatisticsMessages[i].username + "</td><td>" + response.userStatisticsMessages[i].currentVote + "</td><td>" + formattedAvg + "</td>";
-		output += "<td><button class=\"btnKickUser\" value=\"" + response.userStatisticsMessages[i].userId +"\" onclick=\"kickUserButtonClicked(this);\">Kick User</button></td></tr>"
 
+		
+		output += "<td><button class=\"btnKickUser\" value=\"" + response.userStatisticsMessages[i].userId +"\" onclick=\"kickUserButtonClicked(this);\">Kick User</button></td>";
+
+		output += "</tr>";
+		
 		if (response.userStatisticsMessages[i].averagePoints != 0) {
 			totalAllUsersAvg += response.userStatisticsMessages[i].averagePoints;
 			countAllUsersAvg++;
@@ -795,7 +942,7 @@ function updateUserList(response) {
 }
 
 function sendCheckInSession() {
-	console.log("SENDING checkInSession..");
+	//console.log("SENDING checkInSession..");
 	
 	var inSes = sessionStorage.getItem("currently_in_session");
 	
@@ -841,7 +988,7 @@ function kickFromKickList(response) {
 
 
 function sendKickUser(id) {
-	console.log("SENDING kickUser..");
+	//console.log("SENDING kickUser..");
 		
 	var request = {};
 	request["userId"] = id;
@@ -854,7 +1001,7 @@ function sendKickUser(id) {
 
 
 function sendUpdatePastVotesTable() {
-	console.log("SENDING updatePastVotesTable..");
+	//console.log("SENDING updatePastVotesTable..");
 	
 	var request = {};
 	
@@ -869,13 +1016,14 @@ function updatePastVotesTable(response) {
 	
 	var table = "<thead><th>User</th>";
 
-	//console.log("tasksInOrder length: " + tasksInOrder.length);
+	////console.log("tasksInOrder length: " + tasksInOrder.length);
 
 	var currentTaskTotals = [];
 	var currentTaskVoteCount = [];
 	
 	for (var i = 0; i < tasksInOrder.length; i++) {
 		table += "<th>Task " + (i+1) + "</th>";
+		//table += "<th>" + tasksInOrder[i] + "</th>";
 		currentTaskTotals[i] = 0.0;
 		currentTaskVoteCount[i] = 0;
 	}
@@ -887,7 +1035,7 @@ function updatePastVotesTable(response) {
 		table += "<tr><td>" + response.userStatisticsMessages[i].username + "</td>";		
 		
 		for (var j = 0; j < tasksInOrder.length; j++) {
-			//console.log("Task: " + j + "  - Desc: " + tasksInOrder[j] + "  - Points: " + response.userStatisticsMessages[i].pointsPerTask[tasksInOrder[j]]);
+			////console.log("Task: " + j + "  - Desc: " + tasksInOrder[j] + "  - Points: " + response.userStatisticsMessages[i].pointsPerTask[tasksInOrder[j]]);
 			table += "<td>" + response.userStatisticsMessages[i].pointsPerTask[tasksInOrder[j]] + "</td>";
 
 			if (!isNaN(response.userStatisticsMessages[i].pointsPerTask[tasksInOrder[j]])) {
@@ -902,7 +1050,7 @@ function updatePastVotesTable(response) {
  	var temp = "<tr><th class=\"th-bottom\">Task Average</th>";
  
 	for (i = 0; i < currentTaskVoteCount.length; i++) {
-		console.log("total for task: " + (i+1) + " " + currentTaskTotals[i] + " count: " + currentTaskVoteCount[i]);
+		//console.log("total for task: " + (i+1) + " " + currentTaskTotals[i] + " count: " + currentTaskVoteCount[i]);
 		var avg = currentTaskTotals[i] / currentTaskVoteCount[i];
 		var formattedAvg = Number(avg.toFixed(2));
 		
@@ -934,8 +1082,8 @@ function togglePointType() {
 }
 
 function sendUpdatePointType() {
-	console.log("SENDING updatePointType..");
-	console.log("typeIsSize = " + typeIsSize);
+	//console.log("SENDING updatePointType..");
+	//console.log("typeIsSize = " + typeIsSize);
 	var request = {};
 	request["booleanValue"] = typeIsSize;
 	
@@ -945,8 +1093,8 @@ function sendUpdatePointType() {
 
 function updatePointType(response) {
 	typeIsSize = response.booleanValue;
-	console.log("UPDATING Point Type..");
-	console.log("typeIsSize = " + typeIsSize);
+	//console.log("UPDATING Point Type..");
+	//console.log("typeIsSize = " + typeIsSize);
 	if (typeIsSize == true) {
 		$('.points-size-group').show();
 		$('.points-number-group').hide();
@@ -973,6 +1121,7 @@ function toggleVoteVisibility() {
 	} else {
 		$('#gameSessionShowVotes').val(false);
 		sendHideVotes();
+		
 	}
 }
 

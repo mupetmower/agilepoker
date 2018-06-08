@@ -9,6 +9,8 @@ public class PointsReply {
 	private List<String> points = new ArrayList<String>();
 	
 	private boolean showVotes = false;
+	private boolean fromCreator = false;
+	
 	
 	public void setUsernames(List<String> usernames) {
 		this.usernames = usernames;
@@ -38,6 +40,14 @@ public class PointsReply {
 	public void add(String username, String points) {
 		this.usernames.add(username);
 		this.points.add(points);
+	}
+
+	public boolean isFromCreator() {
+		return fromCreator;
+	}
+
+	public void setFromCreator(boolean fromCreator) {
+		this.fromCreator = fromCreator;
 	}
 	
 }

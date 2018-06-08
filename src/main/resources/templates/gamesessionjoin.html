@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head lang="en">
  
-    <title>Create Session</title>
+    <title>Join Session</title>
  
     <!--/*/ <th:block th:include="fragments/headincludes :: head"></th:block> /*/-->
 </head>
@@ -57,13 +57,13 @@ function getUsernameFromLocalStorage() {
 function WindowLoad(event) {
 	if (supportsHtml5Storage()) {
     	supportsLocalStorage = true;
-    	console.log("This browser DOES support local storage....");
+    	//console.log("This browser DOES support local storage....");
     	
     	enterNameInUsernameField(getUsernameFromLocalStorage());
        	
     } else {
     	supportsLocalStorage = false;
-    	console.log("This browser does NOT support local storage....");
+    	//console.log("This browser does NOT support local storage....");
     }
 	
 }

@@ -62,7 +62,7 @@ public class UserController {
 	
 	@MessageMapping(value = "/kickuser/{gamesessionid}")
 	@SendTo("/topic/userkicked/{gamesessionid}")
-	public @ResponseBody String kickUser(@Valid @RequestBody UserMessage request, @DestinationVariable Integer gamesessionid) {
+	public @ResponseBody UserMessage kickUser(@Valid @RequestBody UserMessage request, @DestinationVariable Integer gamesessionid) {
 				
 		GameSession gs = gameSessionService.getSessionById(gamesessionid);
 		
@@ -74,7 +74,9 @@ public class UserController {
 			gameSessionService.saveSession(gs);
 			
 		}
-		return "";
+				
+		
+		return request;
 	}
 	
 	

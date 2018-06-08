@@ -232,6 +232,41 @@ public class GameSessionController {
 		return request;
 	}
 	
+	@Transactional
+	@MessageMapping("/updatetasknoclear/{id}")
+	@SendTo("/topic/updatetasknoclear/{id}")
+	public @ResponseBody TaskMessage updateTaskNoClear(@Valid @RequestBody TaskMessage request, @DestinationVariable int id) throws Exception {
+		
+		String task = request.getTaskDescription();
+		
+		GameSession gameSession;		
+		
+		TaskMessage response = new TaskMessage();
+		response.setTaskDescription(task);
+		
+		
+		gameSession = gameSessionService.getSessionById(id);
+		gameSession.setTaskDescription(task);
+		
+		Set<User> users = gameSession.getUsers();
+		gameSessionService.saveSession(gameSession);	
+		
+		
+		users.forEach(user -> {
+			UserStatistics userStats = userStatisticsService.getUserStatisticsById(user.getUserStatistics().getId());
+			//userStats.setCurrentVote(points.toString());
+			String points = userStats.getCurrentVote();
+			if (!points.equals("-1")) {
+				System.out.println("Calling updateAveragePoints() for " + user.getUsername() + "... Points: " + points);
+				userStats.updateAveragePoints(task, points);
+				userStatisticsService.saveUserStatistics(userStats);
+			}
+			
+		});	
+		
+		return request;
+	}
+	
 	
 	@MessageMapping(value = "/showvotes/{id}")
 	@SendTo("/topic/updatepoints/{id}")
@@ -254,6 +289,7 @@ public class GameSessionController {
 		return response;
 	}
 	
+	@Transactional
 	@MessageMapping(value = "/hidevotes/{id}")
 	@SendTo("/topic/updatepoints/{id}")
     public @ResponseBody PointsReply hideVotes(@Valid @RequestBody VoteOperatonMessage request, @DestinationVariable int id) {

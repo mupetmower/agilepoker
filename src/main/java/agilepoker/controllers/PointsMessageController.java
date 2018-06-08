@@ -115,6 +115,7 @@ public class PointsMessageController {
 		userStatisticsService.saveUserStatistics(userStats);
 		
 		response.setShowVotes(request.getShowVotes());
+		response.setFromCreator(request.isFromCreator());
 		
 		return response;
 	}

@@ -11,6 +11,7 @@ public class PointsUpdateRequest {
     private int userId;
     private int gameSessionId;
     private boolean showVotes;
+    private boolean fromCreator = false;
     
 
     public enum MessageType {
@@ -73,6 +74,14 @@ public class PointsUpdateRequest {
 	
 	public boolean getShowVotes() {
 		return showVotes;
+	}
+
+	public boolean isFromCreator() {
+		return fromCreator;
+	}
+
+	public void setFromCreator(boolean fromCreator) {
+		this.fromCreator = fromCreator;
 	}
     
 }
