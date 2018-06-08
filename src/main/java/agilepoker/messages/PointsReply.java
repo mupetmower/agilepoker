@@ -6,7 +6,7 @@ import java.util.List;
 public class PointsReply {
 
 	private List<String> usernames = new ArrayList<String>();
-	private List<Integer> points = new ArrayList<Integer>();
+	private List<String> points = new ArrayList<String>();
 	
 	private boolean showVotes = false;
 	
@@ -18,11 +18,11 @@ public class PointsReply {
 		return usernames;
 	}
 	
-	public void setPoints(List<Integer> points) {
+	public void setPoints(List<String> points) {
 		this.points = points;
 	}
 	
-	public List<Integer> getPoints() {
+	public List<String> getPoints() {
 		return points;
 	}
 	
@@ -35,7 +35,7 @@ public class PointsReply {
 	}
 	
 	
-	public void add(String username, int points) {
+	public void add(String username, String points) {
 		this.usernames.add(username);
 		this.points.add(points);
 	}

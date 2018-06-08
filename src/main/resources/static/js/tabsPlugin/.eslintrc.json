@@ -96,11 +96,9 @@
             "always"
         ],
         "semi-spacing": [
-            "error",
-            {
-                // Because of the `for ( ; ...)` requirement
-                // "before": true,
-                "after": true
+            "error", {
+            	"after": true
+               
             }
         ],
         "space-infix-ops": "error",

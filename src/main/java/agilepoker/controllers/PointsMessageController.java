@@ -2,17 +2,18 @@ package agilepoker.controllers;
 
 import java.util.Set;
 
+import javax.transaction.Transactional;
 import javax.validation.Valid;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import agilepoker.bootstrap.ProductLoader;
 import agilepoker.domain.GameSession;
 import agilepoker.domain.User;
 import agilepoker.domain.UserStatistics;
@@ -29,7 +30,7 @@ public class PointsMessageController {
 	UserService userService;
 	UserStatisticsService userStatisticsService;
 	
-	private Logger log = Logger.getLogger(ProductLoader.class);
+	private Logger log = Logger.getLogger(PointsMessageController.class);
 	
 	@Autowired
 	public void setSessionService(GameSessionService gameSessionService) {
@@ -74,15 +75,15 @@ public class PointsMessageController {
 //        return PointsMessage;
 //    }
 	
-	
-	@MessageMapping("/updateallpoints")
-	@SendTo("/topic/updatepoints")
-	public @ResponseBody PointsReply replyToPointsMessage(@Valid @RequestBody PointsUpdateRequest request) throws Exception {
+	@Transactional
+	@MessageMapping("/updateallpoints/{id}")
+	@SendTo("/topic/updatepoints/{id}")
+	public @ResponseBody PointsReply replyToPointsMessage(@Valid @RequestBody PointsUpdateRequest request, @DestinationVariable int id) throws Exception {
 		PointsReply response = new PointsReply();
 		
 		User user;
 		GameSession gameSession;
-		Integer points = 0;
+		String points = "-1";
 		
 		user = userService.getUserById((int)request.getUserId());
 		points = request.getPoints();
@@ -101,19 +102,14 @@ public class PointsMessageController {
 		
 		Set<User> users = gameSession.getUsers();
 		
-		users.forEach(u -> {
-			if (u.getPoints() != -1) {
-				log.info("User " + u.getUsername() + ", Points: " + u.getPoints());
-				response.add(u.getUsername(), u.getPoints());
-			}
-		});
+		users.forEach(u -> response.add(u.getUsername(), u.getPoints()));
 		
 		//log.info(userStatisticsService.getUserStatisticsById(user.getUserStatistics().getId()));
 		//log.info(user.getUserStatistics());
 		
 		UserStatistics userStats = userStatisticsService.getUserStatisticsById(user.getUserStatistics().getId());
 		userStats.setCurrentVote(points.toString());
-		if (points != -1) {
+		if (!points.equals("-1")) {
 			userStats.setCurrentVote(points.toString());
 		}
 		userStatisticsService.saveUserStatistics(userStats);

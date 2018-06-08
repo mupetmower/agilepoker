@@ -7,8 +7,6 @@ import org.springframework.context.annotation.Configuration;
 
 import agilepoker.services.GameSessionService;
 import agilepoker.services.GameSessionServiceImpl;
-import agilepoker.services.ProductService;
-import agilepoker.services.ProductServiceImpl;
 import agilepoker.services.UserService;
 import agilepoker.services.UserServiceImpl;
 import agilepoker.services.UserStatisticsService;
@@ -23,10 +21,7 @@ public class WebConfiguration {
         return registrationBean;
     }
     
-    @Bean
-    ProductService productService(){
-        return new ProductServiceImpl();
-    }
+
     
     @Bean
     GameSessionService gameSessionService(){

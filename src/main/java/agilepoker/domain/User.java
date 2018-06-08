@@ -34,7 +34,7 @@ public class User {
     @Size(min = 1, max = 30, message = "error.username.size")
     private String username;
     
-    private int points = -1;
+    private String points = "-1";
     
     private Role role = Role.User;
 
@@ -62,11 +62,11 @@ public class User {
     	return "GuestUser" + getId().toString();
     }
     
-    public int getPoints() {
+    public String getPoints() {
         return points;
     }
 
-    public void setPoints(int points) {
+    public void setPoints(String points) {
         this.points = points;
     }
 

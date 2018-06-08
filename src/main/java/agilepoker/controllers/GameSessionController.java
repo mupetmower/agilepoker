@@ -25,11 +25,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
 
-import agilepoker.bootstrap.ProductLoader;
 import agilepoker.domain.GameSession;
 import agilepoker.domain.Role;
 import agilepoker.domain.User;
 import agilepoker.domain.UserStatistics;
+import agilepoker.messages.BooleanMessage;
 import agilepoker.messages.KickListMessage;
 import agilepoker.messages.PointsReply;
 import agilepoker.messages.TaskMessage;
@@ -48,7 +48,7 @@ public class GameSessionController {
 	UserService userService;
 	UserStatisticsService userStatisticsService;
 	
-	private Logger log = Logger.getLogger(ProductLoader.class);
+	private Logger log = Logger.getLogger(GameSessionController.class);
 	
 	@Autowired
 	public void setgameSessionService(GameSessionService gameSessionService) {
@@ -92,7 +92,7 @@ public class GameSessionController {
 		attributes.addFlashAttribute("passedUser", newUser);
 		
 		gameSession.addUser(newUser);
-		
+		gameSession.setPointTypeIsSize(false);
 		gameSessionService.saveSession(gameSession);
 		
 		
@@ -198,9 +198,9 @@ public class GameSessionController {
 	
 	
 	@Transactional
-	@MessageMapping("/updatetask")
-	@SendTo("/topic/updatetask")
-	public @ResponseBody TaskMessage replyToPointsMessage(@Valid @RequestBody TaskMessage request) throws Exception {
+	@MessageMapping("/updatetask/{id}")
+	@SendTo("/topic/updatetask/{id}")
+	public @ResponseBody TaskMessage replyToPointsMessage(@Valid @RequestBody TaskMessage request, @DestinationVariable int id) throws Exception {
 		
 		String task = request.getTaskDescription();
 		
@@ -210,7 +210,7 @@ public class GameSessionController {
 		response.setTaskDescription(task);
 		
 		
-		gameSession = gameSessionService.getSessionById(request.getGameSessionId());
+		gameSession = gameSessionService.getSessionById(id);
 		gameSession.setTaskDescription(task);
 		
 		Set<User> users = gameSession.getUsers();
@@ -222,6 +222,7 @@ public class GameSessionController {
 			//userStats.setCurrentVote(points.toString());
 			String points = userStats.getCurrentVote();
 			if (!points.equals("-1")) {
+				System.out.println("Calling updateAveragePoints() for " + user.getUsername() + "... Points: " + points);
 				userStats.updateAveragePoints(task, points);
 				userStatisticsService.saveUserStatistics(userStats);
 			}
@@ -232,38 +233,9 @@ public class GameSessionController {
 	}
 	
 	
-	@MessageMapping(value = "/showvotes")
-	@SendTo("/topic/updatepoints")
-    public @ResponseBody PointsReply showVotes(@Valid @RequestBody VoteOperatonMessage request) {
-		PointsReply response = new PointsReply();
-		GameSession gameSession;
-		
-		gameSession = gameSessionService.getSessionById(request.getGameSessionId());
-		
-		gameSession.setShowVotes(request.getShowVotes());		
-		gameSessionService.saveSession(gameSession);
-		
-		Set<User> users = gameSession.getUsers();
-		
-//		users.forEach(u -> {
-//			if (u.getPoints() != -1) {
-//				log.info("User " + u.getUsername() + ", Points: " + u.getPoints());
-//				response.add(u.getUsername(), u.getPoints());
-//			}
-//		});
-//		
-		users.stream()
-				.filter(u -> u.getPoints() != -1)
-				.forEach(u -> response.add(u.getUsername(), u.getPoints()));
-		
-		response.setShowVotes(request.getShowVotes());
-		
-		return response;
-	}
-	
-	@MessageMapping(value = "/hidevotes")
-	@SendTo("/topic/updatepoints")
-    public @ResponseBody PointsReply hideVotes(@Valid @RequestBody VoteOperatonMessage request) {
+	@MessageMapping(value = "/showvotes/{id}")
+	@SendTo("/topic/updatepoints/{id}")
+    public @ResponseBody PointsReply showVotes(@Valid @RequestBody VoteOperatonMessage request, @DestinationVariable int id) {
 		PointsReply response = new PointsReply();
 		GameSession gameSession;
 		
@@ -275,7 +247,6 @@ public class GameSessionController {
 		Set<User> users = gameSession.getUsers();
 		
 		users.stream()
-				.filter(u -> u.getPoints() != -1)
 				.forEach(u -> response.add(u.getUsername(), u.getPoints()));
 		
 		response.setShowVotes(request.getShowVotes());
@@ -283,28 +254,53 @@ public class GameSessionController {
 		return response;
 	}
 	
-	@MessageMapping(value = "/clearvotes")
-	@SendTo("/topic/updatepoints")
-    public @ResponseBody PointsReply clearVotes(@Valid @RequestBody VoteOperatonMessage request) {
+	@MessageMapping(value = "/hidevotes/{id}")
+	@SendTo("/topic/updatepoints/{id}")
+    public @ResponseBody PointsReply hideVotes(@Valid @RequestBody VoteOperatonMessage request, @DestinationVariable int id) {
+		PointsReply response = new PointsReply();
+		GameSession gameSession;
+		
+		gameSession = gameSessionService.getSessionById(request.getGameSessionId());
+		
+		gameSession.setShowVotes(request.getShowVotes());		
+		gameSessionService.saveSession(gameSession);
+		
+		Set<User> users = gameSession.getUsers();
+		
+		users.stream()
+				.forEach(u -> response.add(u.getUsername(), u.getPoints()));
+		
+		response.setShowVotes(request.getShowVotes());
+		
+		return response;
+	}
+	
+	@Transactional
+	@MessageMapping(value = "/clearvotes/{id}")
+	@SendTo("/topic/clearvotes/{id}")
+    public @ResponseBody PointsReply clearVotes(@Valid @RequestBody VoteOperatonMessage request, @DestinationVariable int id) {
 		GameSession gameSession;		
 		gameSession = gameSessionService.getSessionById(request.getGameSessionId());		
 		gameSession.clearAllVotes();
 		gameSession.setShowVotes(request.getShowVotes());
 		gameSessionService.saveSession(gameSession);
 		
-		gameSession.getUsers().forEach(u -> {
-			u.getUserStatistics().setCurrentVote("-1");
-			userStatisticsService.saveUserStatistics(u.getUserStatistics());
-		});
-				
+		Set<User> users = gameSession.getUsers();
 		PointsReply response = new PointsReply();
+		users.forEach(u ->  {
+			u.setPoints("-1");
+			userService.saveUser(u);
+			response.add(u.getUsername(), u.getPoints());
+		});
+		
 		response.setShowVotes(request.getShowVotes());
 		return response;
 	}
 	
-	@MessageMapping(value = "/updatevotes")
-	@SendTo("/topic/updatepoints")
-    public @ResponseBody PointsReply updateVotes(@Valid @RequestBody VoteOperatonMessage request) {
+	@Transactional
+	@MessageMapping(value = "/updatevotes/{id}")
+	@SendTo("/topic/updatepoints/{id}")
+    public @ResponseBody PointsReply updateVotes(@Valid @RequestBody VoteOperatonMessage request, @DestinationVariable int id) {
 		PointsReply response = new PointsReply();
 		GameSession gameSession;
 		
@@ -315,9 +311,7 @@ public class GameSessionController {
 		
 		Set<User> users = gameSession.getUsers();
 		
-		users.stream()
-				.filter(u -> u.getPoints() != -1)
-				.forEach(u -> response.add(u.getUsername(), u.getPoints()));
+		users.forEach(u -> response.add(u.getUsername(), u.getPoints()));
 		
 		response.setShowVotes(request.getShowVotes());
 		
@@ -330,7 +324,7 @@ public class GameSessionController {
 	public @ResponseBody TimeMessage updateTime(@Valid @RequestBody TimeMessage request, @DestinationVariable int id) {
 		String timePassed = request.getTimePassed();
 		
-		GameSession gameSession = gameSessionService.getSessionById(request.getGameSessionId());
+		GameSession gameSession = gameSessionService.getSessionById(id);
 		
 		gameSession.setTimePassed(timePassed);
 		gameSessionService.saveSession(gameSession);
@@ -348,7 +342,7 @@ public class GameSessionController {
 
 		GameSession gameSession = gameSessionService.getSessionById(id);
 		
-		log.info(gameSession.getUsers().toString() + "   " + gameSession.getUsers().size());
+		//log.info(gameSession.getUsers().toString() + "   " + gameSession.getUsers().size());
 		
 //		Set<User> users = gameSession.getUsers();
 //		
@@ -435,6 +429,26 @@ public class GameSessionController {
 							.filter(user -> (user.getIsInsession() != true))
 							.forEach(user -> response.addUserIdToKickList(user.getId()));
 		
+		return response;
+	}
+	
+	
+	@MessageMapping(value = "/updatepointtype/{id}")
+	@SendTo(value = "/topic/updatepointtype/{id}")
+	public @ResponseBody BooleanMessage updatePointType(@Valid @RequestBody BooleanMessage request, @DestinationVariable int id) {		
+		GameSession gameSession = gameSessionService.getSessionById(id);
+		log.info("Updating Point Type: " + request.getBooleanValue());
+		gameSession.setPointTypeIsSize(request.getBooleanValue());
+		gameSessionService.saveSession(gameSession);
+		
+		return request;
+	}
+	
+	@MessageMapping(value = "/requestpointtype/{id}")
+	@SendTo(value = "/topic/updatepointtype/{id}")
+	public @ResponseBody BooleanMessage requestPointType(@Valid @RequestBody BooleanMessage request, @DestinationVariable int id) {		
+		GameSession gameSession = gameSessionService.getSessionById(id);		
+		BooleanMessage response = new BooleanMessage(gameSession.getPointTypeIsSize());
 		return response;
 	}
 }

@@ -1,9 +1,6 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="ISO-8859-1" />
-
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <link href="http://cdn.jsdelivr.net/webjars/bootstrap/3.3.4/css/bootstrap.min.css"
           th:href="@{/webjars/bootstrap/3.3.4/css/bootstrap.min.css}"
           rel="stylesheet" media="screen"/>
@@ -14,31 +11,32 @@
     <link href="../../static/css/main.css"
           th:href="@{css/main.css}" rel="stylesheet" media="screen"/>
 
+
+
 	
 </head>
 <body>
  
-<div class="container">
-    <div th:fragment="header">
-        <nav class="navbar navbar-default">
+<div th:fragment="header">
+	<div class="container-fluid">
+        <nav class="navbar navbar-default" style="background-color: #2f73bc;">
             <div class="container-fluid">
-                <div class="navbar-header">
-                    <a class="navbar-brand" href="#" th:href="@{/}">Home</a>
+               
+                    
                     <ul class="nav navbar-nav">
-                        <li><a href="#" th:href="@{/gamesession/new}">Create New Session</a></li>
-                        <li><a href="#" th:href="@{/gamesession/join}">Join Session</a></li>
+                    	<li><a class="navlinka" href="#" th:href="@{/}">Home</a></li>
+                        <li><a class="navlinka" href="#" th:href="@{/gamesession/new}">Create New Session</a></li>
+                        <li><a class="navlinka" href="#" th:href="@{/gamesession/join}">Join Session</a></li>
                     </ul>
  
-                </div>
+                
             </div>
         </nav>
  
-        <div class="jumbotron">
-            <div class="row text-center">
+        <div class="jumbotron"  style="background-color: #2f73bc; color: #fff;">
+            <div class="row text-center ">
                 <div class="">
-                    <h2>Pointing Poker Clone</h2>
- 
-                    <h3>Prototype</h3>
+                    <h2 class="">CAD Pointing</h2>
                 </div>
             </div>
            

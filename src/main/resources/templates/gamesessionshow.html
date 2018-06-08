@@ -14,9 +14,10 @@
     <!--/*/ <th:block th:include="fragments/header :: header"></th:block> /*/-->
          
          
-    <h2>Session Details</h2>
+    
      
-        <div>
+        <div class="container">
+        <h2>Session Details</h2>
             <form id="descriptionForm" class="form-horizontal">
                 <div class="form-group">
                     <label class="col-sm-2 control-label">Session Id:</label>
@@ -25,7 +26,7 @@
                     </div>
 					
                     <!-- Timer -->
-                    <!-- Implementing later
+                    <!-- FUTURE....
                     <label class="col-sm-2 control-label">Time Passed:</label>
                     <div class="col-sm-2">
                     	
@@ -65,10 +66,14 @@
 			<form th:if="${passedUser.role.name() == 'Creator'}" id="voteOperationForm" class="form-horizontal">
                 <div class="form-group">
        				<label class="col-sm-2 control-label"></label>                  
-               		<div class="col-sm-9">
-                   		<input class="col-sm-3" type="submit" id="btnShowVotes" value="Show Votes"/>
-                   		<input class="col-sm-3" type="submit" id="btnHideVotes" value="Hide Votes"/>
-						<input class="col-sm-3" type="submit" id="btnClearVotes" value="Clear Votes"/>
+               		<div class="col-sm-10">               		
+	               		<table>
+		               		<tr>
+		               			<td><button class="btn btn-primary" id="btnToggleVoteVisibility">Toggle Vote Visibility</button></td>
+		                   	 	<td><button class="btn btn-primary" type="submit" id="btnClearVotes">Clear Votes</button></td>
+		                    	<td><button class="btn btn-primary" id="toggle-point-type" onclick="togglePointType();">Toggle Point Type</button></td>
+		                    </tr>
+	               		</table>
 					</div>
                 </div>
                 
@@ -81,34 +86,54 @@
             	<input type="hidden" id="currentUserId" th:value="${passedUser.id}"/>
             	<input type="hidden" id="gameSessionId" th:value="${gamesession.id}"/>
             	<input type="hidden" id="gameSessionShowVotes" th:value="${gamesession.showVotes}"/>
+            	<input type="hidden" id="gameSessionPointTypeIsSize" th:value="${gamesession.pointTypeIsSize}"/>
             
                 <div class="form-group">
+                <div class="points-number-group">
                     <label class="col-sm-2 control-label">Points:</label>
                     <div class="col-sm-10">
-                        <p class="form-control-static">
-                        	<button class="pointbutton" value="1">1 Point</button>
-                        	<button class="pointbutton" value="2">2 Points</button>
-                        	<button class="pointbutton" value="3">3 Points</button>
-                        </p>
-                        <p class="form-control-static">
-                        	<button class="pointbutton" value="5">5 Points</button>
-                        	<button class="pointbutton" value="10">10 Points</button>
-                        	<button class="pointbutton" value="20">20 Points</button>
-                        </p>
+                    
+                        <table class="pointstable">
+	                        <tr>
+	                        	<td class="pointstabletd"><button class="pointbutton btn btn-info" value="1">1</button></td>
+	                        	<td class="pointstabletd"><button class="pointbutton btn btn-info" value="2">2</button></td>
+	                        	<td class="pointstabletd"><button class="pointbutton btn btn-info" value="3">3</button></td>
+	                        	<td class="pointstabletd"><button class="pointbutton btn btn-info" value="5">5</button></td>
+	                        </tr>
+	                        <tr>
+	                        	<td class="pointstabletd"><button class="pointbutton btn btn-info" value="8">8</button></td>
+	                        	<td class="pointstabletd"><button class="pointbutton btn btn-info" value="13">13</button></td>
+	                        	<td class="pointstabletd"><button class="pointbutton btn btn-info" value="21">21</button></td>
+	                        	<td class="pointstabletd"><button class="pointbutton btn btn-info" value="40">40</button></td>
+	                        </tr>
+                        </table>
                     </div>
+                </div>
+                <div class="points-size-group" style="display:none">
+                    <label class="col-sm-2 control-label">Size:</label>
+                    <div class="col-sm-10">
+                        <p class="form-control-static">
+                        	<button class="sizebutton btn btn-info" value="small">Small</button>
+                        	<button class="sizebutton btn btn-info" value="medium">Medium</button>
+                        	<button class="sizebutton btn btn-info" value="large">Large</button>
+                        </p>                        
+                    </div>
+               </div>  
+                    
+                    
                 </div>
     		</form>
     		
     		<br/>
     		<br/>
     		
-    		<!-- Have tabs if user is game's creator - votes and voting stats -->
-    		<div th:if="${passedUser.role.name() == 'Creator'}">
-	    		<div data-tabs-role="tabs" class="tabs tabs_style_default tabs_color_gray">
+    		<!-- Have tabs if user is game's creator - current votes and voting statistics -->
+    		<div class="container row" th:if="${passedUser.role.name() == 'Creator'}">
+	    		<div data-tabs-role="tabs" class="tabs tabs_style_default tabs_color_blue">
 	    			
 			   		<div class="tabs__head">
-						<button class="tabs__tab" type="button" data-tabs-target="votes-tab" data-tabs-role="tab">User Votes</button>
-						<button class="tabs__tab" type="button" data-tabs-target="user-stats-tab" data-tabs-role="tab">User Statistics</button>
+						<button class="tabs__tab" type="button" data-tabs-target="votes-tab" data-tabs-role="tab">Current Votes</button>
+						<button class="tabs__tab" type="button" data-tabs-target="user-stats-tab" data-tabs-role="tab">Statistics</button>
 					</div>
 					
 					
@@ -123,39 +148,29 @@
 					
 					<div class="tabs__body">
 						<div class="tabs__pane" data-tabs-id="user-stats-tab">
+						
 							<h4>Statistics</h4>
 							
 							<table id="user-stats-table">
 								<thead><tr>
 									<th>User</th>
 									<th>Current Vote</th>
-									<th>Average Points</th>
-									<th>Average Time</th>
+									<th>Average Points</th>									
 									<th></th>
 								</tr></thead>
 								<tbody id="user-stats-table-body">
-									<!-- <tr class="user-stats-row creator-row tr-body">
-										<td class="creator-username" th:inline="text">[[__${passedUser.username}__]]</td>
-										<td class="current-vote"></td>
-										<td class="current-vote"></td>
-										<td class="avg-points"></td>
-										<td class="avg-time"></td>
-									</tr> -->
-								
-								</tbody>
+																	
+								</tbody>							
+							</table>
 							
 							<br/>
 							
-							</table>
-							
 							<h4>Voting History</h4>
-							<table id="user-pastvotes-table">
-								
+							
+							<table id="user-pastvotes-table">								
 									
 							</table>
-							
-							
-														
+																		
 						</div>					
 					</div>
 			
@@ -167,24 +182,7 @@
             		
             	</table>
             </div>
-    		
-            
-            
-            
-            
-            <!--  Testing Stuff    		
-    		<br/>
-            <br/>
-            <div>
-            	<div><h2 th:inline="text">[[__${passedUser.username}__]]</h2></div>            	
-           		<div th:each="user : ${gamesession.users}">
-               		<p th:text="${user.id}">ID:</p>
-               		<p th:text="${user.username}">Name:</p>
-               	</div>            	
-            </div>
-            -->
-            
-            
+    		            
             
             <br/>
             <br/>
@@ -221,7 +219,7 @@
 	/*<![CDATA[*/
 		
 		if ($("#userIsCreator").val() == "true") {
-			window.setInterval(sendUpdateTime, 1000);
+			//window.setInterval(sendUpdateTime, 1000);
 		}
     /*]]>*/
 	//window.setInterval(sendUpdateTime, 1000);
@@ -234,7 +232,7 @@ $(document).ready(function() {
 
 	$(window).on('change.tabs', function(event) {
 		event.preventDefault();
-		console.log('change');
+		//console.log('change');
 	});
 });
 
@@ -273,6 +271,8 @@ function displayLocalStorageContents() {
 var gameSessionId = $('#gameSessionId').val();
 var currentUserId = $('#currentUserId').val();
 var inSession = "true";
+var typeIsSize = $('#gameSessionPointTypeIsSize').val();
+
 
 var stompClient = null;
 var value = null;
@@ -322,9 +322,7 @@ function WindowLoad(event) {
     	supportsLocalStorage = false;
     	console.log("This browser does NOT support local storage....");
     }
-    
-    
-   
+       
    
 }
 
@@ -351,6 +349,10 @@ $('.pointbutton').click(function(){
     value = $(this).val();
 });
 
+$('.sizebutton').click(function(){
+    value = $(this).val();
+});
+
 
 $("#pointsForm").submit(function (event) {
 
@@ -373,6 +375,10 @@ $("#descriptionForm").submit(function (event) {
 $("#voteOperationForm").submit(function (event) {
     //stop submit the form, we will post it manually.
     event.preventDefault();
+});
+
+$('#btnToggleVoteVisibility').click(function(){
+    toggleVoteVisibility();
 });
 
 $('#btnShowVotes').click(function(){
@@ -402,7 +408,7 @@ function initSockJS() {
 	    stompClient.connect({}, function (frame) {
 	        //setConnected(true);
 	        console.log('Connected: ' + frame);
-	        stompClient.subscribe('/topic/updatepoints', function (response) {
+	        stompClient.subscribe('/topic/updatepoints/' + gameSessionId, function (response) {
 	            //showResponse(JSON.parse(response.body).content);
 	        	updatePoints((JSON.parse(response.body)));
 	        });
@@ -412,19 +418,20 @@ function initSockJS() {
 	        	updateTime((JSON.parse(response.body)));
 	        });
 	        
-	        stompClient.subscribe('/topic/updatetask', function (response) {
+	        stompClient.subscribe('/topic/updatetask/' + gameSessionId, function (response) {
 	            //showResponse(JSON.parse(response.body).content);
-	        	updateTask((JSON.parse(response.body)));
+	        	updateTask((JSON.parse(response.body)));	        	
+	        	
 	        });
 	        
-	        stompClient.subscribe('/topic/showvotes', function (response) {
-	            //showResponse(JSON.parse(response.body).content);
-	        	showVotes((JSON.parse(response.body)));
-	        });
-	        
-	        stompClient.subscribe('/topic/clearvotes', function (response) {
+	        stompClient.subscribe('/topic/showvotes/' + gameSessionId, function (response) {
 	            //showResponse(JSON.parse(response.body).content);
 	        	updatePoints((JSON.parse(response.body)));
+	        });
+	        
+	        stompClient.subscribe('/topic/clearvotes/' + gameSessionId, function (response) {
+	            //showResponse(JSON.parse(response.body).content);	            				
+	        	updatePointsFromClear((JSON.parse(response.body)));
 	        });
 	        
 	        stompClient.subscribe('/topic/updateuserlist/' + gameSessionId, function (response) {
@@ -448,13 +455,15 @@ function initSockJS() {
 	        	kickFromKickList((JSON.parse(response.body)));
 	        });
 	        
-	        
+	        stompClient.subscribe('/topic/updatepointtype/' + gameSessionId, function (response) {
+	            //showResponse(JSON.parse(response.body).content);
+	        	updatePointType((JSON.parse(response.body)));
+	        });
 	        
 //Other initializations that need messaging and subscriptions to finish first must go here
-	        initPoints();
-	        
+	        initPoints();	                
 	        addToUserList();
-	        
+	    	requestPointType()
 	    });
 	
 	    
@@ -467,46 +476,6 @@ function addToUserList() {
 	sendUpdateUser();
 }
 
-
-function fire_ajax_submit() {
-	
-	var request = {}
-	//request["user"] = ${"passedUser"};
-	request["points"] = $("#btnPoints").val();
-	request["userId"] = $("#currentUserId").val();
-	request["gameSessionId"] = $("#gameSessionId").val();
-	
-	 $.ajax({
-	        type: "POST",
-	        contentType: "application/json",
-	        url: "/user/updatepoints",
-	        data: JSON.stringify(request),
-	        dataType: 'json',
-	        cache: false,
-	        timeout: 600000,
-	        success: function (data) {
-
-	            var json = "<h4>Ajax Response</h4><pre>"
-	                + JSON.stringify(data, null, 4) + "</pre>";
-	            $('#pointresponse').html(json);
-
-	            console.log("SUCCESS : ", data);
-	            //$("#btn-search").prop("disabled", false);
-
-	        },
-	        error: function (e) {
-
-	            var json = "<h4>Ajax Response</h4><pre>" + e.responseText + "</pre>";
-	            $('#pointresponse').html(json);
-
-	            console.log("ERROR : ", e);
-	            //$("#btn-search").prop("disabled", false);
-
-	        }
-	    });
-
-	
-}
 
 
 
@@ -521,24 +490,116 @@ function sendUpdatePoints() {
 	request["gameSessionId"] = $("#gameSessionId").val();
 	request["showVotes"] = $("#gameSessionShowVotes").val();
 		        
-	stompClient.send("/msg/updateallpoints", {}, JSON.stringify(request));
+	stompClient.send("/msg/updateallpoints/" + gameSessionId, {}, JSON.stringify(request));
 	/*]]>*/
 }
 
 function updatePoints(response) {
 	/*<![CDATA[*/    	
 		
-	var output = "<thead><tr><th>User</th><th>Points</th></tr></thead>";	
+	var output = "<thead><tr><th>User</th><th>Has Voted</th><th>Points</th></tr></thead>";	
+
+	var currentTotal = 0.0;
+	var currentCount = 0;
+	var currentAvg = 0.0;
 	
 	for (var i = 0; i < response.usernames.length; i++) {
+		
 		if (response.showVotes) {
-			output += "<tr class=\"tr-body\"><td>" + response.usernames[i] + "</td><td>" + response.points[i] + "</td></tr>"
-		} else {
-			output += "<tr class=\"tr-body\"><td>" + response.usernames[i] + "</td><td><div background-color=\"#ffffff\" color=\"#ffffff\">       </div></td></tr>";
-		}			
+			
+			output += "<tr class=\"tr-body\"><td>" + response.usernames[i] + "</td>";
+			
+			if (response.points[i] != -1) {
+				output += "<td>Yes</td><td>" + response.points[i] + "</td>";
+				if (!isNaN(response.points[i])) {
+					currentTotal += parseFloat(response.points[i]);
+					currentCount++;
+				} else {
+					//If time, put logic to get avg of s,m,l
+				}
+			} else {
+				output += "<td></td><td></td>";
+			}
+			output += "</tr>";
+			
+		} else {			
+			output += "<tr class=\"tr-body\"><td>" + response.usernames[i] + "</td>";
+			
+			if (response.points[i] != -1) {
+				output += "<td>Yes</td><td></td>";
+			} else {
+				output += "<td></td><td></td>";
+			}
+			output += "</tr>";		}			
 	}	
+
+	if (response.showVotes) {
+		currentAvg = currentTotal / currentCount;
+		var formattedCurrentAvg = Number(currentAvg.toFixed(2));
+		output += "<tr><th class=\"th-bottom\" colspan=\"2\">Current Average</th><th class=\"th-bottom\">" + formattedCurrentAvg + "</th></tr>";
+	}
+	//So this hidden input val will update with the correct value.. (for some reason it would not update
+	//for all sessions)
+	$('#gameSessionShowVotes').val(response.showVotes);
+    $('.pointresponse').html(output);
+    
+    
+    sendUpdateUser();
+
+    /*]]>*/
+}
+
+
+function updatePointsFromClear(response) {
+	/*<![CDATA[*/    
 	
+    value = -1;
+    $('#gameSessionShowVotes').val(false);
+	sendUpdatePoints();
+	sendUpdateUser();
+	sendHideVotes();
+		
+	var output = "<thead><tr><th>User</th><th>Has Voted</th><th>Points</th></tr></thead>";	
+
+	var currentTotal = 0.0;
+	var currentCount = 0;
+	var currentAvg = 0.0;
 	
+	for (var i = 0; i < response.usernames.length; i++) {
+		
+		if (response.showVotes) {
+			
+			output += "<tr class=\"tr-body\"><td>" + response.usernames[i] + "</td>";
+			
+			if (response.points[i] != -1) {
+				output += "<td>Yes</td><td>" + response.points[i] + "</td>";
+				if (!isNaN(response.points[i])) {
+					currentTotal += parseFloat(response.points[i]);
+					currentCount++;
+				} else {
+					//If time, put logic to get avg of s,m,l
+				}
+			} else {
+				output += "<td></td><td></td>";
+			}
+			output += "</tr>";
+			
+		} else {			
+			output += "<tr class=\"tr-body\"><td>" + response.usernames[i] + "</td>";
+			
+			if (response.points[i] != -1) {
+				output += "<td>Yes</td><td></td>";
+			} else {
+				output += "<td></td><td></td>";
+			}
+			output += "</tr>";		}			
+	}	
+
+	if (response.showVotes) {
+		currentAvg = currentTotal / currentCount;
+		var formattedCurrentAvg = Number(currentAvg.toFixed(2));
+		output += "<tr><th class=\"th-bottom\" colspan=\"2\">Current Average</th><th class=\"th-bottom\">" + formattedCurrentAvg + "</th></tr>";
+	}
 	//So this hidden input val will update with the correct value.. (for some reason it would not update
 	//for all sessions)
 	$('#gameSessionShowVotes').val(response.showVotes);
@@ -552,7 +613,6 @@ function updatePoints(response) {
 
 
 
-
 function sendUpdateTask() {
 	console.log("SENDING updateTask..");
 	
@@ -560,7 +620,7 @@ function sendUpdateTask() {
 	request["gameSessionId"] = $("#gameSessionId").val();
 	request["taskDescription"] = $("#task").val();
 	        
-	stompClient.send("/msg/updatetask", {}, JSON.stringify(request));	
+	stompClient.send("/msg/updatetask/" + gameSessionId, {}, JSON.stringify(request));	
 }
 
 
@@ -568,8 +628,14 @@ var tasksInOrder = [];
 
 function updateTask(response) {
 	$('#task').val(response.taskDescription);
-	resetTime();
-	sendUpdateUser();
+	//resetTime();
+	
+	sendClearVotes();
+	//value = -1;
+	//sendUpdatePoints();
+	//sendUpdateUser();
+	//sendHideVotes();
+
 	
 	var inArray = false;
 	
@@ -597,7 +663,7 @@ function sendShowVotes() {
 	request["gameSessionId"] = $("#gameSessionId").val();
 	request["showVotes"] = "true";
 	
-	stompClient.send("/msg/showvotes", {}, JSON.stringify(request));
+	stompClient.send("/msg/showvotes/" + gameSessionId, {}, JSON.stringify(request));
 }
 
 function sendHideVotes() {
@@ -607,7 +673,7 @@ function sendHideVotes() {
 	request["gameSessionId"] = $("#gameSessionId").val();
 	request["showVotes"] = "false";
 	
-	stompClient.send("/msg/hidevotes", {}, JSON.stringify(request));
+	stompClient.send("/msg/hidevotes/" + gameSessionId, {}, JSON.stringify(request));
 }
 
 function sendClearVotes() {
@@ -617,7 +683,7 @@ function sendClearVotes() {
 	request["gameSessionId"] = $("#gameSessionId").val();
 	request["showVotes"] = "false";
 	
-	stompClient.send("/msg/clearvotes", {}, JSON.stringify(request));
+	stompClient.send("/msg/clearvotes/" + gameSessionId, {}, JSON.stringify(request));
 }
 
 function sendUpdateVotes() {
@@ -627,7 +693,7 @@ function sendUpdateVotes() {
 	request["gameSessionId"] = $("#gameSessionId").val();
 	request["showVotes"] = $("#gameSessionShowVotes").val();
 	
-	stompClient.send("/msg/updatevotes", {}, JSON.stringify(request));
+	stompClient.send("/msg/updatevotes/" + gameSessionId, {}, JSON.stringify(request));
 }
 
 
@@ -691,12 +757,35 @@ function updateUserList(response) {
 	/*<![CDATA[*/
 		
 	var output = "";
+
+	var totalAllUsersAvg = 0.0;
+	var countAllUsersAvg = 0;
+	var avgAllUsersAvg = 0.0;
+	var formattedAvg;
+
 	
 	for (var i = 0; i < response.userStatisticsMessages.length; i++) {
+		if (!isNaN(response.userStatisticsMessages[i].averagePoints)) {
+			formattedAvg = Number(response.userStatisticsMessages[i].averagePoints.toFixed(2));
+		} else {
+			formattedAvg = response.userStatisticsMessages[i].averagePoints;
+		}
 
-		output += "<tr><td>" + response.userStatisticsMessages[i].username + "</td><td>" + response.userStatisticsMessages[i].currentVote + "</td><td>" + response.userStatisticsMessages[i].averagePoints + "</td><td>" + response.userStatisticsMessages[i].averageTime + "</td>";
+		
+		output += "<tr><td>" + response.userStatisticsMessages[i].username + "</td><td>" + response.userStatisticsMessages[i].currentVote + "</td><td>" + formattedAvg + "</td>";
 		output += "<td><button class=\"btnKickUser\" value=\"" + response.userStatisticsMessages[i].userId +"\" onclick=\"kickUserButtonClicked(this);\">Kick User</button></td></tr>"
+
+		if (response.userStatisticsMessages[i].averagePoints != 0) {
+			totalAllUsersAvg += response.userStatisticsMessages[i].averagePoints;
+			countAllUsersAvg++;
+		}
 	}
+
+	avgAllUsersAvg = totalAllUsersAvg / countAllUsersAvg;
+	var formattedAllUsersAvg = Number(avgAllUsersAvg.toFixed(2));
+	
+	//output += "<tr><td> </td><td> </td><td> </td><td> </td></tr>";
+	output += "<tr><th colspan=\"2\" class=\"th-bottom\">Total Running Average</th><th class=\"th-bottom\">" + formattedAllUsersAvg + "</th><th class=\"th-bottom\"></th></tr>"
 	
 	$('#user-stats-table-body').html(output);
 	
@@ -779,43 +868,112 @@ function updatePastVotesTable(response) {
 	/*<![CDATA[*/
 	
 	var table = "<thead><th>User</th>";
-//Table Header Creation
 
+	//console.log("tasksInOrder length: " + tasksInOrder.length);
 
-	console.log("tasksInOrder length: " + tasksInOrder.length);
-
+	var currentTaskTotals = [];
+	var currentTaskVoteCount = [];
+	
 	for (var i = 0; i < tasksInOrder.length; i++) {
-		table += "<th>Task " + i + "</th>";
+		table += "<th>Task " + (i+1) + "</th>";
+		currentTaskTotals[i] = 0.0;
+		currentTaskVoteCount[i] = 0;
 	}
 	
 	table += "</thead><tbody>";
 	
-	/* for (var i = 0; i < response.userStatisticsMessages.length; i++) {
-		table += "<tr><td>" + response.userStatisticsMessages.username + "</td>";
-		for (var [task, points] of response.userStatisticsMessages[i].pointsPerTask) {
-			table += "<td>" + points + "</td>";
-		}
-		table += "</tr>";
-	} */
-	
-	
-	
 //Table Body Creation
  	for (var i = 0; i < response.userStatisticsMessages.length; i++) {
-		table += "<tr><td>" + response.userStatisticsMessages[i].username + "</td>";
+		table += "<tr><td>" + response.userStatisticsMessages[i].username + "</td>";		
 		
 		for (var j = 0; j < tasksInOrder.length; j++) {
-			console.log("Task: " + j + "  - Desc: " + tasksInOrder[j] + "  - Points: " + response.userStatisticsMessages[i].pointsPerTask[tasksInOrder[j]]);
+			//console.log("Task: " + j + "  - Desc: " + tasksInOrder[j] + "  - Points: " + response.userStatisticsMessages[i].pointsPerTask[tasksInOrder[j]]);
 			table += "<td>" + response.userStatisticsMessages[i].pointsPerTask[tasksInOrder[j]] + "</td>";
+
+			if (!isNaN(response.userStatisticsMessages[i].pointsPerTask[tasksInOrder[j]])) {
+				currentTaskVoteCount[j]++;
+				currentTaskTotals[j] += parseFloat(response.userStatisticsMessages[i].pointsPerTask[tasksInOrder[j]]);
+			}
 		}
 		
 		table += "</tr>";
-	} 
+	}
+
+ 	var temp = "<tr><th class=\"th-bottom\">Task Average</th>";
+ 
+	for (i = 0; i < currentTaskVoteCount.length; i++) {
+		console.log("total for task: " + (i+1) + " " + currentTaskTotals[i] + " count: " + currentTaskVoteCount[i]);
+		var avg = currentTaskTotals[i] / currentTaskVoteCount[i];
+		var formattedAvg = Number(avg.toFixed(2));
+		
+		temp += "<th class=\"th-bottom\">" + formattedAvg + "</th>";
+	}
 	
+	temp += "</tr>";
+
+	table += temp;	
 	table += "</tbody>";
 	
 	$('#user-pastvotes-table').html(table);
 	/*]]>*/
+}
+
+
+function togglePointType() {
+	if (typeIsSize == true) {
+		typeIsSize = false;
+	} else {
+		typeIsSize = true;
+	}
+
+	//$('.points-size-group').toggle();
+	//$('.points-number-group').toggle();
+	
+	sendUpdatePointType();
+	
+}
+
+function sendUpdatePointType() {
+	console.log("SENDING updatePointType..");
+	console.log("typeIsSize = " + typeIsSize);
+	var request = {};
+	request["booleanValue"] = typeIsSize;
+	
+	stompClient.send("/msg/updatepointtype/" + gameSessionId, {}, JSON.stringify(request));	
+}
+
+
+function updatePointType(response) {
+	typeIsSize = response.booleanValue;
+	console.log("UPDATING Point Type..");
+	console.log("typeIsSize = " + typeIsSize);
+	if (typeIsSize == true) {
+		$('.points-size-group').show();
+		$('.points-number-group').hide();
+	} else {
+		$('.points-size-group').hide();
+		$('.points-number-group').show();
+	}
+	
+}
+
+
+function requestPointType() {
+	var request = {};
+	stompClient.send("/msg/requestpointtype/" + gameSessionId, {}, JSON.stringify(request));	
+}
+
+
+
+function toggleVoteVisibility() {
+	var show = $('#gameSessionShowVotes').val();
+	if (show == "false") {
+		$('#gameSessionShowVotes').val(true);
+		sendShowVotes();
+	} else {
+		$('#gameSessionShowVotes').val(false);
+		sendHideVotes();
+	}
 }
 
 

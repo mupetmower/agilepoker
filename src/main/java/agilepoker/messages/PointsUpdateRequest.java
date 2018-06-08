@@ -7,7 +7,7 @@ public class PointsUpdateRequest {
 	private MessageType type;
     private String content;
     private String sender;
-    private int points;
+    private String points;
     private int userId;
     private int gameSessionId;
     private boolean showVotes;
@@ -43,11 +43,11 @@ public class PointsUpdateRequest {
         this.sender = sender;
     }
     
-    public int getPoints() {
+    public String getPoints() {
         return points;
     }
 
-    public void setPoints(int points) {
+    public void setPoints(String points) {
         this.points = points;
     }
     

@@ -15,6 +15,7 @@ import javax.persistence.Id;
 import javax.persistence.OneToOne;
 import javax.persistence.OrderColumn;
 import javax.persistence.Version;
+import javax.transaction.Transactional;
 
 
 
@@ -39,7 +40,7 @@ public class UserStatistics {
 	
 	
 	
-	@ElementCollection(fetch = FetchType.EAGER)
+	@ElementCollection(fetch = FetchType.LAZY)
 	private List<String> points;
 	
 	private String averageTime;
@@ -52,21 +53,41 @@ public class UserStatistics {
 	private Map<String, String> taskWithPoints;
 	
 	
-	
-//	public void updateAveragePoints(String newTask, int newVote) {
-//		pointsPerTask.put(newTask, newVote);
-//		int total = 0;
-//		OptionalDouble avg = pointsPerTask.values().stream().mapToInt(i -> i.intValue()).average();
-//		averagePoints = avg.getAsDouble();
-//		System.out.println(averagePoints);
-//	}
-	
-	
+	@Transactional
 	public void updateAveragePoints(String newTask, String newVote) {
 		points.add(newVote);
-		//int total = 0;
-		OptionalDouble avg = points.stream().mapToInt(s -> Integer.parseInt(s)).average();
-		averagePoints = avg.getAsDouble();
+		
+		
+		double total = 0;
+		int count = 0;
+		
+		System.out.println("Calculating Average.........");
+		for (int i = 0; i < points.size(); i++) {
+			System.out.println("Value For Task " + (i+1) + ": " + points.get(i));
+			if (stringIsInteger(points.get(i))) {
+				int p = Integer.parseInt(points.get(i));
+				if (p != -1) {
+					System.out.println("Added: " + p);
+					System.out.println("Old Total: " + total);
+					total += p;
+					System.out.println("New Total: " + total);
+					System.out.println("Old Count: " + count);
+					count++;
+					System.out.println("New Count: " + count);
+				}
+				
+			}
+		}
+		
+		averagePoints = total / count;
+		
+		
+//		OptionalDouble avg = points.stream()
+//				.filter(s -> stringIsInteger(s))
+//				.mapToInt(s -> Integer.parseInt(s))
+//				.filter(i -> i != -1)
+//				.average();
+//		averagePoints = avg.getAsDouble();
 		
 		System.out.println(averagePoints);
 		
@@ -78,13 +99,16 @@ public class UserStatistics {
 	
 	
 	
-	private int secondsFromZero(String timeString) {
-		int seconds = 0;
-		
-		
-		
-		return seconds;
+	public boolean stringIsInteger(String s) {
+		try {
+			Integer.parseInt(s);
+		} catch (NumberFormatException numEx) {
+			return false;
+		}
+		return true;
 	}
+	
+	
 	
 	public Integer getId() {
 		return id;

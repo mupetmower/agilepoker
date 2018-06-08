@@ -36,6 +36,7 @@ public class GameSession {
     private boolean showVotes = false;
     
     private String timePassed = "00:00:00";
+    private boolean pointTypeIsSize = false;
     
 
     public String getTaskDescription() {
@@ -96,7 +97,15 @@ public class GameSession {
     }
     
     public void clearAllVotes() {
-    	users.forEach(u -> u.setPoints(-1));
+    	users.forEach(u -> u.setPoints("-1"));
     }
+
+	public boolean getPointTypeIsSize() {
+		return pointTypeIsSize;
+	}
+
+	public void setPointTypeIsSize(boolean pointTypeIsSize) {
+		this.pointTypeIsSize = pointTypeIsSize;
+	}
     
 }

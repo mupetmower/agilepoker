@@ -1,8 +1,6 @@
 package agilepoker.controllers;
 
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-
 import javax.validation.Valid;
 
 import org.apache.log4j.Logger;
@@ -12,13 +10,11 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import agilepoker.bootstrap.ProductLoader;
 import agilepoker.domain.GameSession;
 import agilepoker.domain.Role;
 import agilepoker.domain.User;
@@ -34,7 +30,7 @@ public class UserController {
 	UserService userService;
 	UserStatisticsService userStatisticsService;
 	
-	private Logger log = Logger.getLogger(ProductLoader.class);
+	private Logger log = Logger.getLogger(UserController.class);
 	
 	@Autowired
 	public void setSessionService(GameSessionService gameSessionService) {
